@@ -1,6 +1,6 @@
 # CLAUDE.md — kb.duv0-x.cloud
 
-Repo de la **instancia** de Scriba de Duván (`https://kb.duv0-x.cloud`), no del producto. El código de Scriba vive en `/Users/lx-duv0-x/Documents/Repositories/scriba`; las notas, en `duv0-x/ia-kb` (clon local `/Users/lx-duv0-x/Documents/ia-kb`). Español, con términos técnicos en inglés.
+Repo de la **instancia** de Scriba de Duván (`https://kb.duv0-x.cloud`), no del producto. El código de Scriba vive en `/Users/lx-duv0-x/Documents/Repositories/scriba`; las notas, en `duv0-x/ia-kb`, que se leen y escriben solo vía Scriba (MCP `scriba`; no hay clon local). Español, con términos técnicos en inglés.
 
 ## Reglas
 
@@ -13,4 +13,4 @@ Repo de la **instancia** de Scriba de Duván (`https://kb.duv0-x.cloud`), no del
 ## Contexto
 
 - Runbook: `docs/runbook.md`.
-- Decisiones: ADRs en el repo `scriba` (`docs/adr/`) y el plan `/Users/lx-duv0-x/Documents/ia-kb/plans/2026-11-16-scriba-1-mvp-y-migracion.md` (PR5).
+- Decisiones: ADRs en el repo `scriba` (`docs/adr/`) y el plan `plans/2026-11-16-scriba-1-mvp-y-migracion.md` de la KB (PR5): https://kb.duv0-x.cloud/n/plans/2026-11-16-scriba-1-mvp-y-migracion.md

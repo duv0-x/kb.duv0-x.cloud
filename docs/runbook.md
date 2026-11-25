@@ -14,6 +14,31 @@ Cada paso escribe en producción y se ejecuta con autorización explícita, repo
 | P8 | Agentes → token `claude-code-mac` → Bitwarden → `SCRIBA_URL` y `SCRIBA_TOKEN` en el shell de Claude Code | Navegador y Mac | Revocar el token en Agentes |
 | P9 | Prueba de punta a punta: `claude -p` con el plugin escribe una nota → aparece en vivo → commit `claude-code-mac via Scriba` → llega a GitHub en ≤30 s → `git -C ~/Documents/ia-kb pull` la trae; luego se borra | Mac y navegador | Borrar la nota |
 
+## Rutas en Bypass de Access (conectores de Claude, desde v0.5.0)
+
+La app `scriba-mcp` (*Bypass*: everyone) tiene estos destinos, **exactos y sin comodines**:
+
+- `kb.duv0-x.cloud/mcp`
+- `kb.duv0-x.cloud/.well-known/oauth-protected-resource`
+- `kb.duv0-x.cloud/.well-known/oauth-protected-resource/mcp`
+- `kb.duv0-x.cloud/.well-known/oauth-authorization-server`
+- `kb.duv0-x.cloud/oauth/register`
+- `kb.duv0-x.cloud/oauth/token`
+
+`/oauth/authorize` lo cubre la app `scriba` (*Allow*): quien llegue a esa pantalla puede emitir un token. Comprobar desde fuera tras cualquier cambio:
+
+```sh
+B=https://kb.duv0-x.cloud
+for p in .well-known/oauth-protected-resource/mcp .well-known/oauth-authorization-server; do curl -s -o /dev/null -w "$p %{http_code}\n" $B/$p; done  # 200
+curl -s -X POST $B/oauth/token                                    # invalid_client
+curl -s -o /dev/null -w '%{http_code}\n' $B/oauth/authorize       # 302 al login de Access
+curl -s -o /dev/null -w '%{http_code}\n' $B/                      # 302 al login de Access
+```
+
+Si Claude no logra conectar y en *Security Events* aparece un bloqueo de Browser Integrity Check, desactivarlo solo en esas rutas.
+
+**Antes de volver a una versión anterior a v0.5.0**, revocar los conectores en Agentes: el binario viejo ignora la expiración de sus tokens.
+
 ## Operación
 
 - Logs: `journalctl -u scriba -f`; actualizaciones: `journalctl -u scriba-update`.

@@ -59,6 +59,7 @@ La lista de bases es el contenido de `kbs/`. La base por defecto es `ia-kb` (mig
 - **Access:** `/k/*` y `/kbs` quedan detrás de la app `scriba` (*Allow*). Las rutas Bypass no cambian (lista de arriba). Una ruta vieja (`/n/…`, `/buscar`…) responde 301 a `/k/ia-kb/…`; desde fuera, Access la intercepta antes con 302 al login.
 - **Rollback desde v0.8.0:** el automático solo es seguro hacia v0.7.0, que entiende `--data` (ADR-013, decisión 10). Para volver más atrás, primero restaurar `/etc/systemd/system/scriba.service.pre-kb18` (unidad con `--vault`).
 - **Rollback a una versión anterior a v0.7.0:** el `scriba-update` de v0.7.0 devuelve `kbs/<slug>/vault` a `data/vault` si solo hay una base. Con dos o más no lo hace: hay que borrar las demás primero.
+- **Edición en línea (desde v0.9.0, 2026-11-27, kb.duv0-x.cloud#20):** el lector es el editor (CodeMirror 6 con Live Preview y autosave). El `PUT` de autosave va a la ruta del lector (`/k/<kb>/n/<path>`), queda detrás de la app `scriba` (*Allow*) y **no** se agrega a Bypass. El commit `web: actualiza <path>` se hace tras ~60 s sin guardados en esa ruta, o antes de una escritura de agente en ella. Con presencia de un agente, el PUT responde 423 y el editor queda en solo lectura. `/editar/<path>` responde 301 al lector.
 - **Memoria (RSS de `scriba`, 2026-11-26, v0.7.0):** 39 MB con `ia-kb` (519 notas) recién arrancada; 44,5 MB con `ia-kb` y una base `prueba`; 46,7 MB después de borrarla. `MemoryMax=192M`. La Pi tenía 699 MB disponibles, compartidos con Gremio.
 
 ## Operación

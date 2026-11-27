@@ -50,13 +50,14 @@ Layout en la Pi:
   kbs/<slug>/index.db             # índice, reconstruible
 ```
 
-La lista de bases es el contenido de `kbs/`. La base por defecto es `ia-kb` (migrada desde `data/vault` el 2026-11-26, kb.duv0-x.cloud#15). `scriba.service` sigue con `--vault /scriba/data/vault` a propósito: esa compatibilidad hace la migración y deja volver a un binario anterior. El paso a `--data /scriba/data` va en un issue aparte del repo scriba.
+La lista de bases es el contenido de `kbs/`. La base por defecto es `ia-kb` (migrada desde `data/vault` el 2026-11-26, kb.duv0-x.cloud#15). Desde v0.8.0 (2026-11-27, kb.duv0-x.cloud#18) `scriba.service` arranca con `--data /scriba/data`: `--vault` y `--db` ya no existen (scriba#48). `scriba-update` no reinstala la unidad; si una versión futura cambia `deploy/scriba.service`, hay que instalarla a mano (con `sudo`) antes de subir `scriba.version`.
 
 - **Crear una base:** *Bases* (`/kbs`) → slug (minúsculas, números y guiones, hasta 40; no se puede cambiar) → vacía con la plantilla o desde un `.zip`.
 - **Repo de backup:** crear el repo privado en GitHub (`duv0-x/<repo>`) → *Conectores* → elegir la base → elegir el repo → activar el push. La cuenta de GitHub es una sola para la instancia; el repo y el push son por base. Si la base está vacía, Scriba clona el repo; si no, lo enlaza.
 - **Token de agente:** *Agentes* → nombre y base. Cada token ve una sola base; los tokens anteriores a v0.7.0 quedaron ligados a `ia-kb`. Los conectores OAuth de Claude eligen la base en el consentimiento.
 - **Borrar una base:** *Bases* → teclear el slug. Borra `kbs/<slug>/` y revoca sus tokens (401). La base por defecto no se puede borrar. El repo de GitHub no se toca.
 - **Access:** `/k/*` y `/kbs` quedan detrás de la app `scriba` (*Allow*). Las rutas Bypass no cambian (lista de arriba). Una ruta vieja (`/n/…`, `/buscar`…) responde 301 a `/k/ia-kb/…`; desde fuera, Access la intercepta antes con 302 al login.
+- **Rollback desde v0.8.0:** el automático solo es seguro hacia v0.7.0, que entiende `--data` (ADR-013, decisión 10). Para volver más atrás, primero restaurar `/etc/systemd/system/scriba.service.pre-kb18` (unidad con `--vault`).
 - **Rollback a una versión anterior a v0.7.0:** el `scriba-update` de v0.7.0 devuelve `kbs/<slug>/vault` a `data/vault` si solo hay una base. Con dos o más no lo hace: hay que borrar las demás primero.
 - **Memoria (RSS de `scriba`, 2026-11-26, v0.7.0):** 39 MB con `ia-kb` (519 notas) recién arrancada; 44,5 MB con `ia-kb` y una base `prueba`; 46,7 MB después de borrarla. `MemoryMax=192M`. La Pi tenía 699 MB disponibles, compartidos con Gremio.
 

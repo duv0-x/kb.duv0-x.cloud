@@ -10,7 +10,7 @@ Cada paso escribe en producción y se ejecuta con autorización explícita, repo
 | P4 | Cloudflare Access: app self-hosted `kb.duv0-x.cloud` (*Allow*: el correo del dueño) y app `kb.duv0-x.cloud/mcp` (*Bypass*: everyone) | Dashboard de Cloudflare | Borrar las dos apps |
 | P5 | Añadir `pi/cloudflared-ingress.yml` a `/etc/cloudflared/config.yml` antes del `http_status:404`, `cloudflared tunnel ingress validate`, `sudo systemctl restart cloudflared` (corte de segundos también para Gremio). CNAME: `cloudflared tunnel route dns alfred kb.duv0-x.cloud` desde la Mac con `cert.pem` | Pi y Mac | Quitar la regla y reiniciar `cloudflared`; borrar el CNAME en el dashboard |
 | P6 | Desde fuera: `https://kb.duv0-x.cloud` pide el login de Access; `curl -i https://kb.duv0-x.cloud/mcp` sin token responde 401 de Scriba | Mac | — |
-| P7 | Conectores → Conectar GitHub (device flow) → Bienvenida → Importar desde GitHub `duv0-x/ia-kb` → push activo | Navegador | Desconectar GitHub en Conectores; `sudo rm -rf /scriba/data/vault` |
+| P7 | Conectores → Conectar GitHub (device flow) → Bienvenida → Importar desde GitHub `duv0-x/ia-kb` → push activo | Navegador | Desconectar GitHub en Conectores; `sudo rm -rf /scriba/data/vault` (desde v0.7.0: `/scriba/data/kbs/ia-kb/vault`) |
 | P8 | Agentes → token `claude-code-mac` → Bitwarden → `SCRIBA_URL` y `SCRIBA_TOKEN` en el shell de Claude Code | Navegador y Mac | Revocar el token en Agentes |
 | P9 | Prueba de punta a punta: `claude -p` con el plugin escribe una nota → aparece en vivo → commit `claude-code-mac via Scriba` → llega a GitHub en ≤30 s → `git -C ~/Documents/ia-kb pull` la trae; luego se borra | Mac y navegador | Borrar la nota |
 
@@ -39,9 +39,30 @@ Si Claude no logra conectar y en *Security Events* aparece un bloqueo de Browser
 
 **Antes de volver a una versión anterior a v0.5.0**, revocar los conectores en Agentes: el binario viejo ignora la expiración de sus tokens.
 
+## Varias bases (desde v0.7.0, ADR-013 de Scriba)
+
+Layout en la Pi:
+
+```
+/scriba/data/
+  state.db  secret.key  tmp/      # de la instancia: agentes, OAuth, conectores, Kindle
+  kbs/<slug>/vault/               # repo git de la base
+  kbs/<slug>/index.db             # índice, reconstruible
+```
+
+La lista de bases es el contenido de `kbs/`. La base por defecto es `ia-kb` (migrada desde `data/vault` el 2026-11-26, kb.duv0-x.cloud#15). `scriba.service` sigue con `--vault /scriba/data/vault` a propósito: esa compatibilidad hace la migración y deja volver a un binario anterior. El paso a `--data /scriba/data` va en un issue aparte del repo scriba.
+
+- **Crear una base:** *Bases* (`/kbs`) → slug (minúsculas, números y guiones, hasta 40; no se puede cambiar) → vacía con la plantilla o desde un `.zip`.
+- **Repo de backup:** crear el repo privado en GitHub (`duv0-x/<repo>`) → *Conectores* → elegir la base → elegir el repo → activar el push. La cuenta de GitHub es una sola para la instancia; el repo y el push son por base. Si la base está vacía, Scriba clona el repo; si no, lo enlaza.
+- **Token de agente:** *Agentes* → nombre y base. Cada token ve una sola base; los tokens anteriores a v0.7.0 quedaron ligados a `ia-kb`. Los conectores OAuth de Claude eligen la base en el consentimiento.
+- **Borrar una base:** *Bases* → teclear el slug. Borra `kbs/<slug>/` y revoca sus tokens (401). La base por defecto no se puede borrar. El repo de GitHub no se toca.
+- **Access:** `/k/*` y `/kbs` quedan detrás de la app `scriba` (*Allow*). Las rutas Bypass no cambian (lista de arriba). Una ruta vieja (`/n/…`, `/buscar`…) responde 301 a `/k/ia-kb/…`; desde fuera, Access la intercepta antes con 302 al login.
+- **Rollback a una versión anterior a v0.7.0:** el `scriba-update` de v0.7.0 devuelve `kbs/<slug>/vault` a `data/vault` si solo hay una base. Con dos o más no lo hace: hay que borrar las demás primero.
+- **Memoria (RSS de `scriba`, 2026-11-26, v0.7.0):** 39 MB con `ia-kb` (519 notas) recién arrancada; 44,5 MB con `ia-kb` y una base `prueba`; 46,7 MB después de borrarla. `MemoryMax=192M`. La Pi tenía 699 MB disponibles, compartidos con Gremio.
+
 ## Operación
 
 - Logs: `journalctl -u scriba -f`; actualizaciones: `journalctl -u scriba-update`.
 - Versión instalada: `cat /scriba/.release`. Versión que falló y no se reintenta: `cat /scriba/.failed`.
-- Reconstruir el índice: `sudo systemctl stop scriba && sudo rm -f /scriba/data/scriba.db* && sudo systemctl start scriba`.
+- Reconstruir el índice de una base: `sudo systemctl stop scriba && sudo rm -f /scriba/data/kbs/<slug>/index.db* && sudo systemctl start scriba`.
 - Si se pierden `state.db` o `secret.key`: reconectar GitHub en Conectores y crear tokens de agente nuevos. El vault está en GitHub.
